@@ -1,0 +1,74 @@
+name: Deploy Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'wizdemo'
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: false
+        type: string
+        default: 'wizdemo'
+    outputs:
+      acr_name:
+        description: "The name of the Azure Container Registry"
+        value: ${{ jobs.terraform-deploy.outputs.acr_name }}
+      acr_login_server:
+        description: "The login server URL for the Azure Container Registry"
+        value: ${{ jobs.terraform-deploy.outputs.acr_login_server }}
+      aks_cluster_name:
+        description: "The name of the AKS cluster"
+        value: ${{ jobs.terraform-deploy.outputs.aks_cluster_name }}
+
+jobs:
+  terraform-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      acr_name: ${{ steps.terraform_output.outputs.acr_name }}
+      acr_login_server: ${{ steps.terraform_output.outputs.acr_login_server }}
+      aks_cluster_name: ${{ steps.terraform_output.outputs.aks_cluster_name }}
+    defaults:
+      run:
+        working-directory: ./01_terraform
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      
+    - name: Log in to Azure
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        
+    - name: Terraform Init
+      run: terraform init
+      
+    - name: Terraform Validate
+      run: terraform validate
+      
+    - name: Terraform Plan
+      run: |
+        terraform plan \
+          -var "subscription_id=${{ fromJson(secrets.AZURE_CREDENTIALS).subscription_id }}" \
+          -var "environment=${{ inputs.environment || github.event.inputs.environment || 'wizdemo' }}" \
+          -var "vnet_address_space=[\"10.1.0.0/16\"]" \
+          -out=tfplan
+      
+    - name: Terraform Apply
+      run: terraform apply -auto-approve tfplan
+      
+    - name: Capture Terraform Outputs
+      id: terraform_output
+      run: |
+        echo "acr_name=$(terraform output -raw acr_name)" >> $GITHUB_OUTPUT
+        echo "acr_login_server=$(terraform output -raw acr_login_server)" >> $GITHUB_OUTPUT
+        echo "aks_cluster_name=$(terraform output -raw aks_cluster_name)" >> $GITHUB_OUTPUT

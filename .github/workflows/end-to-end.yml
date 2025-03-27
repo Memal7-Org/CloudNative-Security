@@ -1,0 +1,31 @@
+name: End-to-End Deployment
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'wizdemo'
+
+jobs:
+  terraform:
+    uses: ./.github/workflows/terraform-deploy.yml
+    with:
+        environment: ${{ github.event.inputs && github.event.inputs.environment || 'wizdemo' }}
+    
+  build:
+    uses: ./.github/workflows/build-images.yml
+    needs: terraform
+    with:
+      acr_name: ${{ needs.terraform.outputs.acr_name }}
+    
+  deploy:
+    needs: [build, terraform]
+    uses: ./.github/workflows/kubernetes-deploy.yml
+    with:
+      image_tag: ${{ needs.build.outputs.backend_image_tag }}
+      acr_name: ${{ needs.terraform.outputs.acr_name }}
+      aks_cluster_name: ${{ needs.terraform.outputs.aks_cluster_name }}

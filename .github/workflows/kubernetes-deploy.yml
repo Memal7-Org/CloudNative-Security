@@ -1,0 +1,86 @@
+name: Deploy to Kubernetes
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      image_tag:
+        description: 'Image tag to deploy'
+        required: false
+        type: string
+        default: ''
+      acr_name:
+        description: 'ACR name'
+        required: false
+        type: string
+        default: ''
+      aks_cluster_name:
+        description: 'AKS cluster name'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  kubernetes-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Log in to Azure
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        
+    - name: Set environment variables
+      run: |
+        # Get the outputs from Terraform or inputs
+        echo "RESOURCE_GROUP=${{ vars.RESOURCE_GROUP }}" >> $GITHUB_ENV
+        
+        # Use input values if provided, otherwise try to get from Terraform
+        if [ -n "${{ inputs.acr_name }}" ]; then
+          echo "ACR_NAME=${{ inputs.acr_name }}" >> $GITHUB_ENV
+        fi
+        
+        if [ -n "${{ inputs.aks_cluster_name }}" ]; then
+          echo "AKS_CLUSTER_NAME=${{ inputs.aks_cluster_name }}" >> $GITHUB_ENV
+        fi
+        
+        # Set image tag - use input, commit SHA, or v1 as fallback
+        IMAGE_TAG="${{ inputs.image_tag || github.sha || 'v1' }}"
+        echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+        
+    - name: Login to ACR
+      run: |
+        az acr login --name ${{ env.ACR_NAME }}
+        
+    - name: Set AKS credentials
+      run: |
+        az aks get-credentials --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.AKS_CLUSTER_NAME }}
+        
+    - name: Update Kubernetes manifest with image tags
+      run: |
+        ACR_SERVER="$(az acr show -n ${{ env.ACR_NAME }} --query loginServer -o tsv)"
+        
+        # Update the manifests with the latest image tags
+        sed -i "s|acrwizdemohyena.azurecr.io/backend-app:v1|$ACR_SERVER/backend-app:${{ env.IMAGE_TAG }}|g" ./02_kubernetes/deployment.yaml
+        sed -i "s|acrwizdemohyena.azurecr.io/web-app:v1|$ACR_SERVER/web-app:${{ env.IMAGE_TAG }}|g" ./02_kubernetes/deployment.yaml
+        
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -f ./02_kubernetes/deployment.yaml
+        kubectl apply -f ./02_kubernetes/service.yml
+        
+    - name: Verify deployment
+      run: |
+        kubectl get deployments
+        kubectl get services
+        echo "Waiting for services to be ready..."
+        kubectl wait --for=condition=available --timeout=300s deployment/backend-app
+        kubectl wait --for=condition=available --timeout=300s deployment/web-app
+        
+    - name: Get Web App URL
+      run: |
+        echo "Web application is available at:"
+        kubectl get service web-service -o jsonpath="{.status.loadBalancer.ingress[0].ip}"
