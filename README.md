@@ -4,7 +4,7 @@ A comprehensive repository demonstrating a cloud-native application with intenti
 
 ## Overview
 
-This repository serves as a playground for building and deploying a complete cloud-native application on Azure with deliberately introduced security issues. These include outdated and vulnerable Linux versions, publicly accessible storage accounts, exposed virtual machines, and databases without proper access controls. It provides the foundation for security scanning and analysis across infrastructure, containers, Kubernetes, and CI/CD pipelines, allowing you to discover and remediate issues using modern cloud security tools.
+This repository serves as a playground for building and deploying a cloud-native application on Azure with deliberately introduced security issues. These include outdated and vulnerable Linux versions, publicly accessible storage accounts, exposed virtual machines, and databases without proper access controls. It provides the foundation for security scanning and analysis across infrastructure, containers, Kubernetes, and CI/CD pipelines, allowing you to discover and remediate issues using modern cloud security tools.
 
 ## Purpose
 
