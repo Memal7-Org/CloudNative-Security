@@ -1,0 +1,173 @@
+terraform {
+  required_version = ">= 1.5.0"
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 4.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+  subscription_id = var.subscription_id
+}
+
+# Create a random identifier for unique resource names
+resource "random_pet" "suffix" {
+  length    = 1
+  separator = ""
+}
+
+# Virtual Network and Subnets
+resource "azurerm_virtual_network" "main" {
+  name                = "vnet-${var.environment}"
+  location            = data.azurerm_resource_group.rg-existing.location
+  resource_group_name = data.azurerm_resource_group.rg-existing.name
+  address_space       = var.vnet_address_space
+
+  tags = local.common_tags
+}
+
+resource "azurerm_subnet" "aks_subnet" {
+  name                 = "aks-subnet"
+  resource_group_name  = data.azurerm_resource_group.rg-existing.name
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = [var.aks_subnet_prefix]
+}
+
+resource "azurerm_subnet" "db_subnet" {
+  name                 = "db-subnet"
+  resource_group_name  = data.azurerm_resource_group.rg-existing.name
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = [var.db_subnet_prefix]
+}
+
+# AKS Cluster
+resource "azurerm_kubernetes_cluster" "aks" {
+  name                = "aks-${var.environment}"
+  location            = data.azurerm_resource_group.rg-existing.location
+  resource_group_name = data.azurerm_resource_group.rg-existing.name
+  dns_prefix          = "aks-${var.environment}"
+
+  default_node_pool {
+    name           = "default"
+    node_count     = var.aks_node_count
+    vm_size        = var.aks_vm_size
+    vnet_subnet_id = azurerm_subnet.aks_subnet.id
+  }
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  tags = local.common_tags
+}
+
+# Azure Container Registry for storing container images
+resource "azurerm_container_registry" "acr" {
+  name                     = lower("acr${var.environment}${random_pet.suffix.id}")
+  resource_group_name      = data.azurerm_resource_group.rg-existing.name
+  location                 = data.azurerm_resource_group.rg-existing.location
+  sku                      = "Standard"
+  admin_enabled            = true # Enable admin user for testing purposes
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  tags = local.common_tags
+}
+
+# Grant AKS access to ACR
+resource "azurerm_role_assignment" "aks_to_acr" {
+  principal_id                     = azurerm_kubernetes_cluster.aks.kubelet_identity[0].object_id
+  role_definition_name             = "AcrPull"
+  scope                            = azurerm_container_registry.acr.id
+  skip_service_principal_aad_check = true
+}
+
+# MongoDB VM (Database Tier)
+resource "azurerm_linux_virtual_machine" "mongodb" {
+  name                            = "vm-mongodb-${var.environment}"
+  resource_group_name             = data.azurerm_resource_group.rg-existing.name
+  location                        = data.azurerm_resource_group.rg-existing.location
+  size                            = var.db_vm_size
+  admin_username                  = var.db_admin_username
+  admin_password                  = data.azurerm_key_vault_secret.db_password.value
+  disable_password_authentication = false
+
+  network_interface_ids           = [
+    azurerm_network_interface.mongodb_nic.id,
+  ]
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+    disk_size_gb         = var.db_os_disk_size_gb
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+
+  tags = local.common_tags
+}
+
+resource "azurerm_network_interface" "mongodb_nic" {
+  name                = "nic-mongodb-${var.environment}"
+  location            = data.azurerm_resource_group.rg-existing.location
+  resource_group_name = data.azurerm_resource_group.rg-existing.name
+
+  ip_configuration {
+    name                          = "ipconfig1"
+    subnet_id                     = azurerm_subnet.db_subnet.id
+    private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.mongodb.id # For security demo purposes only!
+  }
+
+  tags = local.common_tags
+}
+
+resource "azurerm_public_ip" "mongodb" {
+  name                = "public-ip-mongodb-${var.environment}"
+  location            = data.azurerm_resource_group.rg-existing.location
+  resource_group_name = data.azurerm_resource_group.rg-existing.name
+  allocation_method   = "Static"
+}
+
+# Grant Terraform service principal access to Key Vault secrets
+resource "azurerm_key_vault_access_policy" "terraform" {
+  key_vault_id = data.azurerm_key_vault.existing.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = data.azurerm_client_config.current.object_id
+
+  secret_permissions = [
+    "Get", "List"
+  ]
+}
+
+# Storage Account for Backups (Storage Tier)
+resource "azurerm_storage_account" "backup" {
+  name                     = lower("stgbackup${random_pet.suffix.id}")
+  resource_group_name      = data.azurerm_resource_group.rg-existing.name
+  location                 = data.azurerm_resource_group.rg-existing.location
+  account_tier             = var.storage_account_tier
+  account_replication_type = var.storage_account_replication_type
+
+  allow_nested_items_to_be_public   = true # Intentional misconfiguration for security demo.
+  
+  tags = local.common_tags
+}
+
+resource "azurerm_storage_container" "backup_container" {
+  name                  = var.storage_container_name
+  storage_account_id    = azurerm_storage_account.backup.id
+}

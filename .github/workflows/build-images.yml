@@ -1,0 +1,66 @@
+name: Build Application Images
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      push:
+        description: 'Whether to push images to registry'
+        required: false
+        type: boolean
+        default: true
+      acr_name:
+        description: "The name of the Azure Container Registry"
+        type: string
+        required: true
+    outputs:
+      backend_image_tag:
+        description: "The tag of the backend image"
+        value: ${{ jobs.build-and-push-images.outputs.backend_image_tag }}
+      web_image_tag:
+        description: "The tag of the web image"
+        value: ${{ jobs.build-and-push-images.outputs.web_image_tag }}
+
+jobs:
+  build-and-push-images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      backend_image_tag: ${{ steps.set_outputs.outputs.backend_image_tag }}
+      web_image_tag: ${{ steps.set_outputs.outputs.web_image_tag }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Log in to Azure
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+    - name: Login to ACR
+      run: |
+        az acr login --name ${{ inputs.acr_name }}
+      
+    - name: Build and push backend image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./03_application/backend
+        push: ${{ inputs.push || true }}
+        tags: ${{ inputs.acr_name }}.azurecr.io/backend-app:v1,${{ inputs.acr_name }}.azurecr.io/backend-app:${{ github.sha }}
+        
+    - name: Build and push web image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./03_application/web-app
+        push: ${{ inputs.push || true }}
+        tags: ${{ inputs.acr_name }}.azurecr.io/web-app:v1,${{ inputs.acr_name }}.azurecr.io/web-app:${{ github.sha }}
+        
+    - name: Set outputs for next jobs
+      id: set_outputs
+      run: |
+        echo "backend_image_tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+        echo "web_image_tag=${{ github.sha }}" >> $GITHUB_OUTPUT
