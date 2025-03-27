@@ -1,4 +1,4 @@
-# Cloud Security Demo Project
+# Cloud-Native Security Demo Project
 
 A comprehensive repository demonstrating a cloud-native application with intentional security weaknesses in infrastructure-as-code (IaC), containerization, and CI/CD pipelines to showcase detection and remediation capabilities of security tools like Wiz, Microsoft Defender for Cloud, and GitHub Advanced Security.
 
