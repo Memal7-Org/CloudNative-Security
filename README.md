@@ -19,7 +19,7 @@ The primary goals of this project are to:
 ## Repository Structure
 
 ```
-wiz-security/
+CloudNative-Security/
 ├── 01_terraform/          # Terraform configuration files
 ├── 02_kubernetes/         # Kubernetes manifests for deployment
 ├── 03_application/        # Application source code
@@ -47,7 +47,7 @@ wiz-security/
 
    ```bash
    git clone https://github.com/yourusername/wiz-security.git
-   cd wiz-security
+   cd CloudNative-Security
    ```
 
 2. **Set up Azure authentication**
@@ -65,7 +65,7 @@ wiz-security/
    - `AZURE_TENANT_ID`
    - `AZURE_SUBSCRIPTION_ID`
 
-   Set up the following repository variable:
+   Set up the following variable as repository variable in your GitHub repository:
    - `RESOURCE_GROUP`
 
 4. **Deploy with the CI/CD pipeline**
@@ -120,7 +120,6 @@ This repository includes GitHub Actions workflows that handle:
 - **terraform-deploy.yml**: Manages infrastructure deployment using Terraform
 - **kubernetes-deploy.yml**: Deploys applications to the Kubernetes cluster
 - **end-to-end.yml**: Orchestrates the entire deployment pipeline
-- **pr-validation.yml**: Validates pull requests without making actual changes
 
 ## Web Application Access
 
