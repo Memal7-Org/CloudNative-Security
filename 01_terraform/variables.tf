@@ -54,8 +54,8 @@ variable "aks_node_pools" {
   default = {
     webapp = {
       vm_size              = "Standard_B2s"
-      min_count            = 2
-      max_count            = 3
+      min_count            = 0
+      max_count            = 0 
       max_pods             = 30
       max_surge            = "25%"
       os_disk_size_gb      = 30

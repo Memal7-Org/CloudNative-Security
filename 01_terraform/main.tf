@@ -83,13 +83,14 @@ resource "azurerm_kubernetes_cluster_node_pool" "additional_pools" {
   name                  = each.key
   kubernetes_cluster_id = azurerm_kubernetes_cluster.aks.id
   vm_size               = each.value.vm_size
-  node_count            = each.value.min_count
-  min_count             = each.value.min_count
-  max_count             = each.value.max_count
+  node_count            = 1  # Add this line to specify the initial node count
+  enable_auto_scaling   = false  # Explicitly disable auto-scaling
+  min_count             = null  # Set to null when auto_scaling is disabled
+  max_count             = null  # Set to null when auto_scaling is disabled
   max_pods              = each.value.max_pods
   os_disk_size_gb       = each.value.os_disk_size_gb
-  os_type               = each.value.os_type
   os_disk_type          = each.value.os_disk_type
+  os_type               = each.value.os_type
   zones                 = each.value.zones
   node_labels           = each.value.node_labels
   node_taints           = each.value.node_taints
@@ -105,7 +106,7 @@ resource "azurerm_container_registry" "acr" {
   resource_group_name      = data.azurerm_resource_group.rg-existing.name
   location                 = data.azurerm_resource_group.rg-existing.location
   sku                      = "Standard"
-  admin_enabled            = true # Enable admin user for testing purposes!
+  admin_enabled            = true  # This enables admin access
 
   identity {
     type = "SystemAssigned"
