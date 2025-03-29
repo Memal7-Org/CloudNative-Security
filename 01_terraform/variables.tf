@@ -110,3 +110,10 @@ variable "storage_account_tier" {
   type        = string
   default     = "Standard"
 }
+variable "mongodb_password" {
+  description = "Password for MongoDB admin user" # Intentionally added to the code for testing purposes!
+  type        = string
+  sensitive   = true
+  default     = "SecurePassword123!"
+
+}

@@ -129,7 +129,7 @@ resource "azurerm_linux_virtual_machine" "mongodb" {
   location                        = data.azurerm_resource_group.rg-existing.location
   size                            = var.db_vm_size
   admin_username                  = var.db_admin_username
-  admin_password                  = data.azurerm_key_vault_secret.db_password.value
+  admin_password                  = var.mongodb_password
   disable_password_authentication = false
 
   network_interface_ids           = [
@@ -151,7 +151,7 @@ resource "azurerm_linux_virtual_machine" "mongodb" {
 
   # Inject the MongoDB installation script from an external file
   custom_data = base64encode(templatefile("scripts/install_mongodb.sh", {
-    mongodb_password = data.azurerm_key_vault_secret.db_password.value
+    mongodb_password = var.mongodb_password
   }))
 
   tags = local.common_tags
@@ -180,26 +180,16 @@ resource "azurerm_public_ip" "mongodb" {
 }
 
 # Grant Terraform service principal access to Key Vault secrets
-resource "azurerm_key_vault_access_policy" "terraform" {
-  key_vault_id = data.azurerm_key_vault.existing.id
-  tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = data.azurerm_client_config.current.object_id
-
-  secret_permissions = [
-    "Get", "List"
-  ]
+resource "azurerm_role_assignment" "terraform_keyvault_secrets_user" {
+  scope                = data.azurerm_key_vault.existing.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = data.azurerm_client_config.current.object_id
 }
 
-# Grant the service principal access to Key Vault secrets
-resource "azurerm_key_vault_access_policy" "pipeline_sp" {
-  key_vault_id = data.azurerm_key_vault.existing.id
-  tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = data.azurerm_client_config.current.object_id
-
-  secret_permissions = [
-    "Get",
-    "List"
-  ]
+resource "azurerm_role_assignment" "pipeline_keyvault_secrets_user" {
+  scope                = data.azurerm_key_vault.existing.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = data.azurerm_client_config.current.object_id
 }
 
 # Storage Account for Backups (Storage Tier)
