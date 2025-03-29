@@ -59,12 +59,8 @@ variable "storage_account_replication_type" {
 variable "storage_container_name" {
   description = "Name of storage container"
   type        = string
-  default     = "backups"
+  default     = "dbbackups"
 }
-
-# resource "random_pet" "suffix" {
-#  length = 1
-# }
 
 variable "db_os_disk_size_gb" {
   description = "OS disk size for MongoDB VM in GB"
