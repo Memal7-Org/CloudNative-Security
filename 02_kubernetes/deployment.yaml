@@ -14,6 +14,8 @@ spec:
       labels:
         app: backend-app
     spec:
+      imagePullSecrets:
+      - name: acr-auth
       containers:
       - name: backend-app
         image: acrwizdemohyena.azurecr.io/backend-app:v1
@@ -45,6 +47,8 @@ spec:
       labels:
         app: web-app
     spec:
+      imagePullSecrets:
+      - name: acr-auth
       containers:
       - name: web-app
         image: acrwizdemohyena.azurecr.io/web-app:v1
