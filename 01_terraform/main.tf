@@ -180,17 +180,17 @@ resource "azurerm_public_ip" "mongodb" {
 }
 
 # Grant Terraform service principal access to Key Vault secrets
-# resource "azurerm_role_assignment" "terraform_keyvault_secrets_user" {
-#  scope                = data.azurerm_key_vault.existing.id
-#  role_definition_name = "Key Vault Secrets User"
-#  principal_id         = data.azurerm_client_config.current.object_id
-#}
+ resource "azurerm_role_assignment" "terraform_keyvault_secrets_user" {
+  scope                = data.azurerm_key_vault.existing.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = data.azurerm_client_config.current.object_id
+}
 
-#resource "azurerm_role_assignment" "pipeline_keyvault_secrets_user" {
-#  scope                = data.azurerm_key_vault.existing.id
-#  role_definition_name = "Key Vault Secrets User"
-#  principal_id         = data.azurerm_client_config.current.object_id
-#}
+resource "azurerm_role_assignment" "pipeline_keyvault_secrets_user" {
+  scope                = data.azurerm_key_vault.existing.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = data.azurerm_client_config.current.object_id
+}
 
 # Storage Account for Backups (Storage Tier)
 resource "azurerm_storage_account" "backup" {
