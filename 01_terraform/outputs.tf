@@ -1,6 +1,6 @@
 output "mongodb_connection_string" {
+  value       = "mongodb://admin:${data.azurerm_key_vault_secret.db_password.value}@${azurerm_linux_virtual_machine.mongodb.private_ip_address}:27017/admin"
   description = "MongoDB connection string"
-  value       = "mongodb://admin:${data.azurerm_key_vault_secret.mongodb_password.value}@${azurerm_linux_virtual_machine.mongodb.private_ip_address}:27017/admin"
   sensitive   = true
 }
 
