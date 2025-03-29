@@ -129,7 +129,7 @@ resource "azurerm_linux_virtual_machine" "mongodb" {
   location                        = data.azurerm_resource_group.rg-existing.location
   size                            = var.db_vm_size
   admin_username                  = var.db_admin_username
-  admin_password                  = data.azurerm_key_vault_secret.db_password.value
+  admin_password                  = var.mongodb_password
   disable_password_authentication = false
 
   network_interface_ids           = [
@@ -151,7 +151,7 @@ resource "azurerm_linux_virtual_machine" "mongodb" {
 
   # Inject the MongoDB installation script from an external file
   custom_data = base64encode(templatefile("scripts/install_mongodb.sh", {
-    mongodb_password = data.azurerm_key_vault_secret.db_password.value
+    mongodb_password = var.mongodb_password
   }))
 
   tags = local.common_tags
