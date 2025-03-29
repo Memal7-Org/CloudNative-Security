@@ -11,9 +11,3 @@ data "azurerm_key_vault" "existing" {
   name                = "kv-wiz-demo"
   resource_group_name = "ODL-candidate-sandbox-02-1652694"    
 }
-
-# Comment out the key vault secret reference to avoid permission errors
-# data "azurerm_key_vault_secret" "db_password" {
-#   name         = "mongodb-password"
-#   key_vault_id = data.azurerm_key_vault.existing.id
-# }
