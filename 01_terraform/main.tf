@@ -29,8 +29,6 @@ resource "azurerm_virtual_network" "main" {
   location            = data.azurerm_resource_group.rg-existing.location
   resource_group_name = data.azurerm_resource_group.rg-existing.name
   address_space       = var.vnet_address_space
-  
-  # ...rest of the configuration...
 }
 
 resource "azurerm_subnet" "aks_subnet" {
@@ -76,6 +74,18 @@ resource "azurerm_kubernetes_cluster" "aks" {
   tags = local.common_tags
 }
 
+resource "azurerm_role_assignment" "aks_rbac_reader" {
+  role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
+  scope                = azurerm_kubernetes_cluster.aks.id
+  principal_id         = data.azurerm_client_config.current.object_id
+}
+
+resource "azurerm_role_assignment" "aks_network_contributor" {
+  role_definition_name = "Network Contributor"
+  scope                = azurerm_subnet.aks_subnet.id
+  principal_id         = data.azurerm_client_config.current.object_id
+}
+
 # Add node pools defined in the aks_node_pools variable
 resource "azurerm_kubernetes_cluster_node_pool" "additional_pools" {
   for_each = var.aks_node_pools
@@ -83,7 +93,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "additional_pools" {
   name                  = each.key
   kubernetes_cluster_id = azurerm_kubernetes_cluster.aks.id
   vm_size               = each.value.vm_size
-  node_count            = 0  # Updated node count to 0
+  node_count            = each.value.node_count
   max_pods              = each.value.max_pods
   os_disk_size_gb       = each.value.os_disk_size_gb
   os_disk_type          = each.value.os_disk_type
@@ -97,13 +107,13 @@ resource "azurerm_kubernetes_cluster_node_pool" "additional_pools" {
   }
 }
 
-# Azure Container Registry for storing container images
+# Azure Container Registry
 resource "azurerm_container_registry" "acr" {
   name                     = lower("acr${var.environment}${random_pet.suffix.id}")
   resource_group_name      = data.azurerm_resource_group.rg-existing.name
   location                 = data.azurerm_resource_group.rg-existing.location
   sku                      = "Standard"
-  admin_enabled            = true  # This enables admin access
+  admin_enabled            = true
 
   identity {
     type = "SystemAssigned"
@@ -117,6 +127,7 @@ resource "azurerm_role_assignment" "aks_to_acr" {
   principal_id                     = azurerm_kubernetes_cluster.aks.kubelet_identity[0].object_id
   role_definition_name             = "AcrPull"
   scope                            = azurerm_container_registry.acr.id
+  # Added skip check to avoid potential errors
   skip_service_principal_aad_check = true
 }
 

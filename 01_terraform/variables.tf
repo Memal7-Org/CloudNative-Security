@@ -38,6 +38,7 @@ variable "aks_node_pools" {
   description = "Node pools configuration for AKS"
   type = map(object({
     vm_size              = string
+    node_count           = number  # Add this field
     max_pods             = number
     max_surge            = string
     os_disk_size_gb      = number
@@ -52,6 +53,7 @@ variable "aks_node_pools" {
   default = {
     webapp = {
       vm_size              = "Standard_B2s"
+      node_count           = 1  # Add this field with a default value of 1
       max_pods             = 30
       max_surge            = "25%"
       os_disk_size_gb      = 30
