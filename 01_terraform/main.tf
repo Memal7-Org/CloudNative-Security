@@ -190,6 +190,18 @@ resource "azurerm_key_vault_access_policy" "terraform" {
   ]
 }
 
+# Grant the service principal access to Key Vault secrets
+resource "azurerm_key_vault_access_policy" "pipeline_sp" {
+  key_vault_id = data.azurerm_key_vault.existing.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = data.azurerm_client_config.current.object_id
+
+  secret_permissions = [
+    "Get",
+    "List"
+  ]
+}
+
 # Storage Account for Backups (Storage Tier)
 resource "azurerm_storage_account" "backup" {
   name                     = lower("stgbackup${random_pet.suffix.id}")
