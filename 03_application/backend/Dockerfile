@@ -1,3 +1,4 @@
+# Intentional misconfiguration for security demo!
 FROM node
 
 WORKDIR /app
