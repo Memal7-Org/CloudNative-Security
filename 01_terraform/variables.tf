@@ -27,7 +27,7 @@ variable "aks_config" {
   default = {
     subnet_prefix    = "10.1.2.0/24"
     node_count       = 2           
-    vm_size          = "Standard_B2s"  # More economical size with 2 vCPU, 4GB RAM
+    vm_size          = "Standard_B2s"
     admin_group_id   = "admin-group-id"
     os_disk_size_gb  = 30
   }
@@ -38,7 +38,7 @@ variable "aks_node_pools" {
   description = "Node pools configuration for AKS"
   type = map(object({
     vm_size              = string
-    node_count           = number  # Add this field
+    node_count           = number
     max_pods             = number
     max_surge            = string
     os_disk_size_gb      = number
@@ -53,7 +53,7 @@ variable "aks_node_pools" {
   default = {
     webapp = {
       vm_size              = "Standard_B2s"
-      node_count           = 1  # Add this field with a default value of 1
+      node_count           = 1
       max_pods             = 30
       max_surge            = "25%"
       os_disk_size_gb      = 30
@@ -77,7 +77,7 @@ variable "db_subnet_prefix" {
 variable "db_vm_size" {
   description = "VM size for MongoDB server"
   type        = string
-  default     = "Standard_B1ms"  # Smaller size for MongoDB (1 vCPU, 2 GB RAM)
+  default     = "Standard_B1ms"
 }
 
 variable "db_admin_username" {

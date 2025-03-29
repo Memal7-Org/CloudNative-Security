@@ -64,7 +64,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     type = "SystemAssigned"
   }
 
-  # Add this network_profile block to specify a non-overlapping service CIDR
+  # Add network_profile block to specify a non-overlapping service CIDR
   network_profile {
     network_plugin     = "azure"
     dns_service_ip     = "172.16.0.10"
@@ -127,7 +127,6 @@ resource "azurerm_role_assignment" "aks_to_acr" {
   principal_id                     = azurerm_kubernetes_cluster.aks.kubelet_identity[0].object_id
   role_definition_name             = "AcrPull"
   scope                            = azurerm_container_registry.acr.id
-  # Added skip check to avoid potential errors
   skip_service_principal_aad_check = true
 }
 
@@ -187,20 +186,6 @@ resource "azurerm_public_ip" "mongodb" {
   resource_group_name = data.azurerm_resource_group.rg-existing.name
   allocation_method   = "Static"
 }
-
-/*
-resource "azurerm_role_assignment" "terraform_keyvault_secrets_user" {
-  scope                = data.azurerm_key_vault.existing.id
-  role_definition_name = "Key Vault Secrets User"
-  principal_id         = data.azurerm_client_config.current.object_id
-}
-
-resource "azurerm_role_assignment" "pipeline_keyvault_secrets_user" {
-  scope                = data.azurerm_key_vault.existing.id
-  role_definition_name = "Key Vault Secrets User"
-  principal_id         = data.azurerm_client_config.current.object_id
-}
-*/
 
 # Storage Account for Backups (Storage Tier)
 resource "azurerm_storage_account" "backup" {
