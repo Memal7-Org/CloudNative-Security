@@ -1,17 +1,7 @@
 output "mongodb_connection_string" {
-  # Change this to use the mongodb_password variable instead of key vault secret
   value       = "mongodb://admin:${var.mongodb_password}@${azurerm_linux_virtual_machine.mongodb.private_ip_address}:27017/admin"
   description = "MongoDB connection string"
   sensitive   = true
-  
-  # Remove the invalid depends_on - this resource doesn't exist
-  # depends_on = [azurerm_key_vault_access_policy.pipeline_sp]
-  
-  # Instead, depend on the role assignments if needed
-  depends_on = [
-    azurerm_role_assignment.terraform_keyvault_secrets_user,
-    azurerm_role_assignment.pipeline_keyvault_secrets_user
-  ]
 }
 
 output "acr_name" {
