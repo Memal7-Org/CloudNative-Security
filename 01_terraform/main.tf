@@ -153,7 +153,7 @@ resource "azurerm_linux_virtual_machine" "mongodb" {
   source_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
+    sku       = "18.04-LTS" # Intentional misconfiguration for security demo!
     version   = "latest"
   }
 
@@ -174,7 +174,7 @@ resource "azurerm_network_interface" "mongodb_nic" {
     name                          = "ipconfig1"
     subnet_id                     = azurerm_subnet.db_subnet.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.mongodb.id # For security demo purposes only!
+    public_ip_address_id          = azurerm_public_ip.mongodb.id # Intentional misconfiguration for security demo!
   }
 
   tags = local.common_tags
@@ -195,7 +195,7 @@ resource "azurerm_storage_account" "backup" {
   account_tier             = var.storage_account_tier
   account_replication_type = var.storage_account_replication_type
 
-  allow_nested_items_to_be_public   = true # Intentional misconfiguration for security demo.
+  allow_nested_items_to_be_public   = true # Intentional misconfiguration for security demo!
   
   tags = local.common_tags
 }
