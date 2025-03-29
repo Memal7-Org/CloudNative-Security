@@ -28,7 +28,7 @@ resource "azurerm_virtual_network" "main" {
   name                = "vnet-${var.environment}"
   location            = data.azurerm_resource_group.rg-existing.location
   resource_group_name = data.azurerm_resource_group.rg-existing.name
-  address_space       = var.vnet_address_space
+  address_space       = [var.vnet_address_space]
 
   tags = local.common_tags
 }
@@ -37,7 +37,7 @@ resource "azurerm_subnet" "aks_subnet" {
   name                 = "aks-subnet"
   resource_group_name  = data.azurerm_resource_group.rg-existing.name
   virtual_network_name = azurerm_virtual_network.main.name
-  address_prefixes     = [var.aks_subnet_prefix]
+  address_prefixes     = [var.aks_config.subnet_prefix]
 }
 
 resource "azurerm_subnet" "db_subnet" {
@@ -55,17 +55,48 @@ resource "azurerm_kubernetes_cluster" "aks" {
   dns_prefix          = "aks-${var.environment}"
 
   default_node_pool {
-    name           = "default"
-    node_count     = var.aks_node_count
-    vm_size        = var.aks_vm_size
-    vnet_subnet_id = azurerm_subnet.aks_subnet.id
+    name            = "default"
+    node_count      = var.aks_config.node_count
+    vm_size         = var.aks_config.vm_size       
+    vnet_subnet_id  = azurerm_subnet.aks_subnet.id
+    os_disk_size_gb = var.aks_config.os_disk_size_gb 
   }
 
   identity {
     type = "SystemAssigned"
   }
 
+  # Add this network_profile block to specify a non-overlapping service CIDR
+  network_profile {
+    network_plugin     = "azure"
+    dns_service_ip     = "172.16.0.10"
+    service_cidr       = "172.16.0.0/16"  # Non-overlapping with your VNet CIDR
+  }
+
   tags = local.common_tags
+}
+
+# Add node pools defined in the aks_node_pools variable
+resource "azurerm_kubernetes_cluster_node_pool" "additional_pools" {
+  for_each = var.aks_node_pools
+
+  name                  = each.key
+  kubernetes_cluster_id = azurerm_kubernetes_cluster.aks.id
+  vm_size               = each.value.vm_size
+  node_count            = each.value.min_count
+  min_count             = each.value.min_count
+  max_count             = each.value.max_count
+  max_pods              = each.value.max_pods
+  os_disk_size_gb       = each.value.os_disk_size_gb
+  os_type               = each.value.os_type
+  os_disk_type          = each.value.os_disk_type
+  zones                 = each.value.zones
+  node_labels           = each.value.node_labels
+  node_taints           = each.value.node_taints
+  orchestrator_version  = each.value.orchestrator_version  
+  upgrade_settings {
+    max_surge = each.value.max_surge
+  }
 }
 
 # Azure Container Registry for storing container images
@@ -74,7 +105,7 @@ resource "azurerm_container_registry" "acr" {
   resource_group_name      = data.azurerm_resource_group.rg-existing.name
   location                 = data.azurerm_resource_group.rg-existing.location
   sku                      = "Standard"
-  admin_enabled            = true # Enable admin user for testing purposes
+  admin_enabled            = true # Enable admin user for testing purposes!
 
   identity {
     type = "SystemAssigned"
@@ -117,6 +148,11 @@ resource "azurerm_linux_virtual_machine" "mongodb" {
     sku       = "18.04-LTS"
     version   = "latest"
   }
+
+  # Inject the MongoDB installation script from an external file
+  custom_data = base64encode(templatefile("scripts/install_mongodb.sh", {
+    mongodb_password = data.azurerm_key_vault_secret.db_password.value
+  }))
 
   tags = local.common_tags
 }
