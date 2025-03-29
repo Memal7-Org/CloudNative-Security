@@ -20,6 +20,8 @@ on:
       web_image_tag:
         description: "The tag of the web image"
         value: ${{ jobs.build-and-push-images.outputs.web_image_tag }}
+permissions:
+   deployments: write
 
 jobs:
   build-and-push-images:
