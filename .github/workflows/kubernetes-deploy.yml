@@ -70,6 +70,13 @@ jobs:
         sed -i "s|acrwizdemohyena.azurecr.io/backend-app:v1|$ACR_SERVER/backend-app:${{ env.IMAGE_TAG }}|g" ./02_kubernetes/deployment.yaml
         sed -i "s|acrwizdemohyena.azurecr.io/web-app:v1|$ACR_SERVER/web-app:${{ env.IMAGE_TAG }}|g" ./02_kubernetes/deployment.yaml
         
+    - name: Create ACR Pull Secret in Kubernetes
+      run: |
+        kubectl create secret docker-registry acr-auth \
+          --docker-server="$(az acr show -g ODL-candidate-sandbox-02-1652694 -n ${{ env.ACR_NAME }} --query loginServer -o tsv)" \
+          --docker-username="$(az acr credential show -g ODL-candidate-sandbox-02-1652694 -n ${{ env.ACR_NAME }} --query username -o tsv)" \
+          --docker-password="$(az acr credential show -g ODL-candidate-sandbox-02-1652694 -n ${{ env.ACR_NAME }} --query passwords[0].value -o tsv)"
+        
     - name: Deploy to Kubernetes
       run: |
         kubectl apply -f ./02_kubernetes/deployment.yaml
