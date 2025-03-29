@@ -9,8 +9,9 @@ variable "environment" {
 }
 
 variable "vnet_address_space" {
-  description     = "Address space for the Virtual Network."
-  type        = string
+  description = "Address space for the virtual network"
+  type        = list(string)
+  default     = ["10.1.0.0/16"]
 }
 
 # AKS cluster configuration
