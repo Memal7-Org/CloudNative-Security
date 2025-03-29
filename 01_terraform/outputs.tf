@@ -1,3 +1,9 @@
+output "mongodb_connection_string" {
+  description = "MongoDB connection string"
+  value       = "mongodb://admin:${data.azurerm_key_vault_secret.mongodb_password.value}@${azurerm_linux_virtual_machine.mongodb.private_ip_address}:27017/admin"
+  sensitive   = true
+}
+
 output "acr_name" {
   description = "The name of the Azure Container Registry"
   value       = azurerm_container_registry.acr.name
