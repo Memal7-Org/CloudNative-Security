@@ -28,9 +28,9 @@ resource "azurerm_virtual_network" "main" {
   name                = "vnet-${var.environment}"
   location            = data.azurerm_resource_group.rg-existing.location
   resource_group_name = data.azurerm_resource_group.rg-existing.name
-  address_space       = [var.vnet_address_space]
-
-  tags = local.common_tags
+  address_space       = var.vnet_address_space
+  
+  # ...rest of the configuration...
 }
 
 resource "azurerm_subnet" "aks_subnet" {

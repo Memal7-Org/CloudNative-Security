@@ -64,7 +64,7 @@ jobs:
           -var "subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
           -var "mongodb_password=SecurePassword123!" \
           -var "environment=${{ inputs.environment || github.event.inputs.environment || 'wizdemo' }}" \
-          -var 'vnet_address_space=["10.1.0.0/16"]' \
+          -var "vnet_address_space=[\"10.1.0.0/16\"]" \
           -out=tfplan
       
     - name: Terraform Apply
