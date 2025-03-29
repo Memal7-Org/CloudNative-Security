@@ -7,13 +7,14 @@ data "azurerm_resource_group" "rg-existing" {
 }
 
 # Get the existing Key Vault
-data "azurerm_key_vault" "existing" {
-  name                = "kv-wiz-demo"
-  resource_group_name = "ODL-candidate-sandbox-02-1652694"    
-}
+# data "azurerm_key_vault" "existing" {
+#  name                = "kv-wiz-demo"
+#  resource_group_name = "ODL-candidate-sandbox-02-1652694"    
+#}
 
 # Get the password secret from Key Vault
-data "azurerm_key_vault_secret" "db_password" {
-  name         = "mongodb-password"
-  key_vault_id = data.azurerm_key_vault.existing.id
-}
+# Commenting out to avoid permission issues in CI/CD
+# data "azurerm_key_vault_secret" "db_password" {
+#   name         = "mongodb-password"
+#   key_vault_id = data.azurerm_key_vault.existing.id
+# }
