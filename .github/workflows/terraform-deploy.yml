@@ -61,7 +61,7 @@ jobs:
     - name: Terraform Plan
       run: |
         terraform plan \
-          -var "subscription_id=${{ fromJson(secrets.AZURE_CREDENTIALS).subscription_id }}" \
+          -var "subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
           -var "environment=${{ inputs.environment || github.event.inputs.environment || 'wizdemo' }}" \
           -var "vnet_address_space=[\"10.1.0.0/16\"]" \
           -out=tfplan
