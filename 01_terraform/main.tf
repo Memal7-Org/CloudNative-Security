@@ -83,10 +83,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "additional_pools" {
   name                  = each.key
   kubernetes_cluster_id = azurerm_kubernetes_cluster.aks.id
   vm_size               = each.value.vm_size
-  node_count            = 1  # Add this line to specify the initial node count
-  enable_auto_scaling   = false  # Explicitly disable auto-scaling
-  min_count             = null  # Set to null when auto_scaling is disabled
-  max_count             = null  # Set to null when auto_scaling is disabled
+  node_count            = 0  # Updated node count to 0
   max_pods              = each.value.max_pods
   os_disk_size_gb       = each.value.os_disk_size_gb
   os_disk_type          = each.value.os_disk_type
