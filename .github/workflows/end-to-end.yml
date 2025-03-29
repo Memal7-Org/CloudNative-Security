@@ -10,17 +10,24 @@ on:
         required: true
         default: 'wizdemo'
 
+# Add permissions here to match those required by called workflows
+permissions:
+  deployments: write
+  contents: read
+
 jobs:
   terraform:
     uses: ./.github/workflows/terraform-deploy.yml
     with:
         environment: ${{ github.event.inputs && github.event.inputs.environment || 'wizdemo' }}
+    secrets: inherit
     
   build:
     uses: ./.github/workflows/build-images.yml
     needs: terraform
     with:
       acr_name: ${{ needs.terraform.outputs.acr_name }}
+    secrets: inherit
     
   deploy:
     needs: [build, terraform]
@@ -29,3 +36,4 @@ jobs:
       image_tag: ${{ needs.build.outputs.backend_image_tag }}
       acr_name: ${{ needs.terraform.outputs.acr_name }}
       aks_cluster_name: ${{ needs.terraform.outputs.aks_cluster_name }}
+    secrets: inherit
