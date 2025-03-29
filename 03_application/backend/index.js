@@ -8,8 +8,7 @@ const PORT = 4000;
 
 // mongoose connection
 mongoose.Promise = global.Promise;
-const mongoURI = process.env.MONGO_URI || 'mongodb://mongo:27017/crm';
-mongoose.connect(mongoURI);
+mongoose.connect('mongodb://mongo:27017/crm');
 
 // bodyparser setup
 app.use(bodyParser.urlencoded({ extended: true }));

@@ -14,6 +14,6 @@ data "azurerm_key_vault" "existing" {
 
 # Get the password secret from Key Vault
 data "azurerm_key_vault_secret" "db_password" {
-  name         = "mongodb-password"
+  name         = "mongodb-password"  # Replace with your actual secret name
   key_vault_id = data.azurerm_key_vault.existing.id
 }

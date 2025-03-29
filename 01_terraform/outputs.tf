@@ -4,7 +4,7 @@ output "acr_name" {
 }
 
 output "acr_login_server" {
-  description = "The login server address for the Azure Container Registry"
+  description = "The login server URL for the Azure Container Registry"
   value       = azurerm_container_registry.acr.login_server
 }
 
@@ -33,9 +33,4 @@ output "acr_admin_password" {
   description = "The admin password for the Azure Container Registry"
   value       = azurerm_container_registry.acr.admin_password
   sensitive   = true
-}
-
-output "mongodb_public_ip" {
-  value       = azurerm_public_ip.mongodb.ip_address
-  description = "The public IP address of the MongoDB VM"
 }
