@@ -159,7 +159,7 @@ resource "azurerm_linux_virtual_machine" "mongodb" {
 
   custom_data = base64encode(templatefile("scripts/install_mongodb.sh", {
     mongodb_password = var.mongodb_password,
-    db_user_password = var.mongodb_password
+    db_user_password = var.mongodb_password  # Using same password for both users
   }))
 
   identity {
@@ -247,5 +247,38 @@ data "azurerm_storage_account_sas" "backup_sas" {
     process = false
     tag     = false
     filter  = false
+  }
+}
+
+# Add a null_resource to handle the backup script setup
+resource "null_resource" "mongodb_backup_setup" {
+  depends_on = [azurerm_linux_virtual_machine.mongodb]
+  
+  provisioner "file" {
+    source      = "scripts/backup_mongodb.sh"
+    destination = "/tmp/backup_mongodb.sh"
+    
+    connection {
+      type        = "ssh"
+      host        = azurerm_public_ip.mongodb.ip_address
+      user        = var.db_admin_username
+      password    = var.mongodb_password
+      agent       = false
+    }
+  }
+  
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /tmp/backup_mongodb.sh",
+      "sudo bash /tmp/backup_mongodb.sh ${var.db_admin_username} ${azurerm_storage_account.backup.name} ${azurerm_storage_container.backup_container.name} \"${data.azurerm_storage_account_sas.backup_sas.sas}\""
+    ]
+    
+    connection {
+      type        = "ssh"
+      host        = azurerm_public_ip.mongodb.ip_address
+      user        = var.db_admin_username
+      password    = var.mongodb_password
+      agent       = false
+    }
   }
 }
