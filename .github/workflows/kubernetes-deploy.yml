@@ -97,7 +97,6 @@ jobs:
       run: |
         kubectl apply -f ./02_kubernetes/deployment.yaml
         kubectl apply -f ./02_kubernetes/service.yml
-        kubectl apply -f ./02_kubernetes/networkpolicy.yaml
         
     - name: Verify deployment
       run: |
