@@ -33,7 +33,7 @@ jobs:
     needs: [build, terraform]
     uses: ./.github/workflows/kubernetes-deploy.yml
     with:
-      image_tag: ${{ needs.build.outputs.backend_image_tag }}
+      environment: ${{ github.event.inputs && github.event.inputs.environment || 'wizdemo' }}
       acr_name: ${{ needs.terraform.outputs.acr_name }}
       aks_cluster_name: ${{ needs.terraform.outputs.aks_cluster_name }}
     secrets: inherit
