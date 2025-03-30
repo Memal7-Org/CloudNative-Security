@@ -6,7 +6,7 @@ variable "subscription_id" {
 variable "environment" {
   description = "Environment tag (e.g., dev, stage, prod)"
   type        = string
-  default     = "wizdemo"
+  default     = "cloudnative-security"
 }
 
 variable "vnet_address_space" {

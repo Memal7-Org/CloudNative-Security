@@ -60,9 +60,3 @@ resource "azurerm_log_analytics_workspace" "aks_logs" {
   
   tags = local.common_tags
 }
-
-# Configure auto provisioning setting
-resource "azurerm_security_center_setting" "auto_provisioning" {
-  setting_name = "WDATP"
-  enabled      = true
-}
