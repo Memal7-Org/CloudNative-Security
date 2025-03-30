@@ -8,9 +8,9 @@ cat > /home/$1/backup_mongodb.sh << 'EOF'
 #!/bin/bash
 DATE=$(date +%Y-%m-%d-%H%M)
 BACKUP_DIR="/tmp/backup"
-STORAGE_ACCOUNT=$1
-CONTAINER_NAME=$2
-SAS_TOKEN=$3
+STORAGE_ACCOUNT=$2
+CONTAINER_NAME=$3
+SAS_TOKEN=$4
 
 # Create backup directory if it doesn't exist
 mkdir -p $BACKUP_DIR
