@@ -157,18 +157,10 @@ resource "azurerm_linux_virtual_machine" "mongodb" {
     version   = "latest"
   }
 
-  # Inject the MongoDB installation script from an external file
-  custom_data = base64encode(join("\n", [
-    templatefile("scripts/install_mongodb.sh", {
-      mongodb_password = var.mongodb_password
-    }),
-    templatefile("scripts/setup_backup.sh", {
-      admin_username = var.db_admin_username,
-      storage_account_name = azurerm_storage_account.backup.name,
-      container_name = azurerm_storage_container.backup_container.name,
-      sas_token = data.azurerm_storage_account_sas.backup_sas.sas
-    })
-  ]))
+  custom_data = base64encode(templatefile("scripts/install_mongodb.sh", {
+    mongodb_password = var.mongodb_password,
+    db_user_password = var.mongodb_password
+  }))
 
   identity {
     type = "SystemAssigned"
