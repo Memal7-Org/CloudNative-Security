@@ -14,11 +14,7 @@ resource "azurerm_security_center_subscription_pricing" "defender_for_servers" {
   resource_type = "VirtualMachines"
 }
 
-resource "azurerm_security_center_subscription_pricing" "defender_for_devops" {
-  tier          = "Standard"
-  resource_type = "DevOps"
-}
-
+# Defender for CSPM
 resource "azurerm_security_center_subscription_pricing" "defender_for_cspm" {
   tier          = "Standard"
   resource_type = "CloudPosture"  # This enables CSPM
@@ -65,13 +61,8 @@ resource "azurerm_log_analytics_workspace" "aks_logs" {
   tags = local.common_tags
 }
 
-# Configure continuous export for Defender for DevOps findings
-resource "azurerm_security_center_auto_provisioning" "example" {
-  auto_provision = "On"
-}
-
-# Enable GitHub advanced security features
-resource "azurerm_security_center_setting" "github_security" {
-  setting_name = "GITHUB"
+# Configure auto provisioning setting
+resource "azurerm_security_center_setting" "auto_provisioning" {
+  setting_name = "WDATP"
   enabled      = true
 }
