@@ -32,7 +32,7 @@ resource "azurerm_virtual_network" "main" {
 }
 
 resource "azurerm_subnet" "aks_subnet" {
-  name                 = "aks-subnet"
+  name                 = "subnet-aks-${var.environment}"
   resource_group_name  = data.azurerm_resource_group.rg-existing.name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = [var.aks_config.subnet_prefix]
@@ -47,10 +47,10 @@ resource "azurerm_subnet" "db_subnet" {
 
 # AKS Cluster
 resource "azurerm_kubernetes_cluster" "aks" {
-  name                = "aks-cloudnative-security"  # Changed from "aks-${var.environment}"
+  name                = "aks-${var.environment}"
   location            = data.azurerm_resource_group.rg-existing.location
   resource_group_name = data.azurerm_resource_group.rg-existing.name
-  dns_prefix          = "aks-cloudnative-security"  # Changed from "aks-${var.environment}"
+  dns_prefix          = "aks-cloudnative-security"
 
   default_node_pool {
     name            = "default"

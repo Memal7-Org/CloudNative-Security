@@ -54,6 +54,9 @@ jobs:
         IMAGE_TAG="${{ inputs.image_tag || github.sha || 'v1' }}"
         echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
         
+        # Look for any fallback or default values using wizdemo
+        var "environment=${{ inputs.environment || github.event.inputs.environment || 'wizdemo' }}" \
+        
     - name: Login to ACR
       run: |
         az acr login --name ${{ env.ACR_NAME }}

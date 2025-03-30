@@ -6,14 +6,14 @@ on:
       environment:
         description: 'Environment to deploy to'
         required: true
-        default: 'wizdemo'
+        default: 'cloudnative-security'
   workflow_call:
     inputs:
       environment:
         description: 'Environment to deploy to'
         required: false
         type: string
-        default: 'wizdemo'
+        default: 'cloudnative-security'
     outputs:
       acr_name:
         description: "The name of the Azure Container Registry"
@@ -63,7 +63,7 @@ jobs:
         terraform plan \
           -var "subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
           -var "mongodb_password=SecurePassword123!" \
-          -var "environment=${{ inputs.environment || github.event.inputs.environment || 'wizdemo' }}" \
+          -var "environment=${{ inputs.environment || github.event.inputs.environment || 'cloudnative-security' }}" \
           -var "vnet_address_space=[\"10.1.0.0/16\"]" \
           -out=tfplan
       
