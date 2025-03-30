@@ -30,40 +30,24 @@ resource "azurerm_monitor_diagnostic_setting" "aks_diagnostics" {
   target_resource_id         = azurerm_kubernetes_cluster.aks.id
   log_analytics_workspace_id = azurerm_log_analytics_workspace.aks_logs.id
   
+  # Choose ONE approach - either specific categories OR category_group
+  # Option 1: Use specific categories
   enabled_log {
     category = "kube-audit"
-    
-    retention_policy {
-      enabled = true
-      days    = 30
-    }
   }
   
   enabled_log {
     category = "kube-audit-admin"
-    
-    retention_policy {
-      enabled = true
-      days    = 30
-    }
   }
   
-  enabled_log {
-    category_group = "allLogs"
-    retention_policy {
-      enabled = true
-      days    = 30
-    }
-  }
+  # Remove the category_group block as it conflicts with specific categories
+  # enabled_log {
+  #   category_group = "allLogs"
+  # }
   
   metric {
     category = "AllMetrics"
     enabled  = true
-    
-    retention_policy {
-      enabled = true
-      days    = 30
-    }
   }
 }
 
