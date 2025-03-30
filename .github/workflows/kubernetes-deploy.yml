@@ -2,98 +2,93 @@ name: Deploy to Kubernetes
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'wizdemo'
+      acr_name:
+        description: 'ACR Name'
+        required: false
+      aks_cluster_name:
+        description: 'AKS Cluster Name'
+        required: false
   workflow_call:
     inputs:
-      image_tag:
-        description: 'Image tag to deploy'
+      environment:
+        description: 'Environment to deploy to'
         required: false
         type: string
-        default: ''
+        default: 'wizdemo'
       acr_name:
-        description: 'ACR name'
+        description: 'ACR Name'
         required: false
         type: string
-        default: ''
       aks_cluster_name:
-        description: 'AKS cluster name'
+        description: 'AKS Cluster Name'
         required: false
         type: string
-        default: ''
 
 jobs:
   kubernetes-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 20    
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
       
-    - name: Log in to Azure
-      run: |
-        az login --service-principal \
-          --username ${{ secrets.AZURE_CLIENT_ID }} \
-          --password ${{ secrets.AZURE_CLIENT_SECRET }} \
-          --tenant ${{ secrets.AZURE_TENANT_ID }}
-        az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        
     - name: Set environment variables
       run: |
-        # Get the outputs from Terraform or inputs
-        echo "RESOURCE_GROUP=${{ vars.RESOURCE_GROUP }}" >> $GITHUB_ENV
+        echo "RESOURCE_GROUP=ODL-candidate-sandbox-02-1652694" >> $GITHUB_ENV
         
         # Use input values if provided, otherwise try to get from Terraform
         if [ -n "${{ inputs.acr_name }}" ]; then
           echo "ACR_NAME=${{ inputs.acr_name }}" >> $GITHUB_ENV
+        else
+          echo "ACR_NAME=acrwizdemogrubworm" >> $GITHUB_ENV
         fi
         
         if [ -n "${{ inputs.aks_cluster_name }}" ]; then
           echo "AKS_CLUSTER_NAME=${{ inputs.aks_cluster_name }}" >> $GITHUB_ENV
+        else
+          echo "AKS_CLUSTER_NAME=aks-wizdemo" >> $GITHUB_ENV
         fi
         
         # Set image tag - use input, commit SHA, or v1 as fallback
-        IMAGE_TAG="${{ inputs.image_tag || github.sha || 'v1' }}"
+        IMAGE_TAG="${{ github.sha || 'v1' }}"
         echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
         
-        # Look for any fallback or default values using wizdemo
-        var "environment=${{ inputs.environment || github.event.inputs.environment || 'wizdemo' }}" \
+        # Set environment variable
+        echo "ENVIRONMENT=${{ inputs.environment || 'wizdemo' }}" >> $GITHUB_ENV
+      
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
         
     - name: Login to ACR
       run: |
         az acr login --name ${{ env.ACR_NAME }}
+        ACR_SERVER=$(az acr show --name ${{ env.ACR_NAME }} --query loginServer -o tsv)
+        echo "ACR_SERVER=$ACR_SERVER" >> $GITHUB_ENV
         
     - name: Set AKS credentials
       run: |
-        az aks get-credentials --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.AKS_CLUSTER_NAME }}
+        az aks get-credentials --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.AKS_CLUSTER_NAME }} --admin
         
     - name: Update Kubernetes manifest with image tags
       run: |
-        ACR_SERVER="$(az acr show -n ${{ env.ACR_NAME }} --query loginServer -o tsv)"
-        
-        # Update the manifests with the latest image tags
-        sed -i "s|acrwizdemohyena.azurecr.io/backend-app:v1|$ACR_SERVER/backend-app:${{ env.IMAGE_TAG }}|g" ./02_kubernetes/deployment.yaml
-        sed -i "s|acrwizdemohyena.azurecr.io/web-app:v1|$ACR_SERVER/web-app:${{ env.IMAGE_TAG }}|g" ./02_kubernetes/deployment.yaml
-        
-    - name: Create ACR Pull Secret in Kubernetes
-      run: |
-        kubectl create secret docker-registry acr-auth \
-          --docker-server="$(az acr show -g ODL-candidate-sandbox-02-1652694 -n ${{ env.ACR_NAME }} --query loginServer -o tsv)" \
-          --docker-username="$(az acr credential show -g ODL-candidate-sandbox-02-1652694 -n ${{ env.ACR_NAME }} --query username -o tsv)" \
-          --docker-password="$(az acr credential show -g ODL-candidate-sandbox-02-1652694 -n ${{ env.ACR_NAME }} --query passwords[0].value -o tsv)"
+        # Replace placeholder image references with actual values
+        sed -i "s|acrwizdemohyena.azurecr.io/backend-app:v1|${{ env.ACR_SERVER }}/backend-app:${{ env.IMAGE_TAG }}|g" ./02_kubernetes/deployment.yaml
+        sed -i "s|acrwizdemohyena.azurecr.io/web-app:v1|${{ env.ACR_SERVER }}/web-app:${{ env.IMAGE_TAG }}|g" ./02_kubernetes/deployment.yaml
         
     - name: Deploy to Kubernetes
       run: |
         kubectl apply -f ./02_kubernetes/deployment.yaml
         kubectl apply -f ./02_kubernetes/service.yml
+        kubectl apply -f ./02_kubernetes/networkpolicy.yaml
         
     - name: Verify deployment
       run: |
         kubectl get deployments
+        kubectl get pods
         kubectl get services
-        echo "Waiting for services to be ready..."
-        kubectl wait --for=condition=available --timeout=300s deployment/backend-app
-        kubectl wait --for=condition=available --timeout=300s deployment/web-app
-        
-    - name: Get Web App URL
-      run: |
-        echo "Web application is available at:"
-        kubectl get service web-service -o jsonpath="{.status.loadBalancer.ingress[0].ip}"
