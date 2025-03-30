@@ -26,7 +26,7 @@ resource "azurerm_security_center_contact" "security_alerts" {
 
 # Enable diagnostic settings for AKS (control plane audit logging)
 resource "azurerm_monitor_diagnostic_setting" "aks_diagnostics" {
-  name                       = "${azurerm_kubernetes_cluster.aks.name}-diagnostics"
+  name                       = "aks-cloudnative-security-diagnostics"  # Changed from "${azurerm_kubernetes_cluster.aks.name}-diagnostics"
   target_resource_id         = azurerm_kubernetes_cluster.aks.id
   log_analytics_workspace_id = azurerm_log_analytics_workspace.aks_logs.id
   
