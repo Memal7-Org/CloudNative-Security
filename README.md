@@ -129,6 +129,25 @@ After successful deployment, access your web application at the external IP prov
 kubectl get service web-service -o jsonpath="{.status.loadBalancer.ingress[0].ip}"
 ```
 
+## Security Controls
+
+The following security controls have been implemented:
+
+### Preventative Controls
+- **Microsoft Defender for Cloud**: Protection for Container Registries, Kubernetes Services, and Virtual Machines
+- **Network Security Group Rules**: Restricts inbound traffic to MongoDB VM (though intentionally misconfigured for demo)
+
+### Detective Controls
+- **Azure Security Center**: Monitors for security vulnerabilities and threats
+- **Control Plane Audit Logging**: Records all API server activity for AKS cluster
+- **Log Analytics**: Centralized logging for audit events and security alerts
+
+### Monitoring and Response
+- **Security Alerts**: Configured to send notifications via email for security incidents
+- **Diagnostic Settings**: Captures detailed AKS control plane logs for investigation
+
+To demonstrate these controls in action, you can run the included `simulate-attack.sh` script after deployment.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.

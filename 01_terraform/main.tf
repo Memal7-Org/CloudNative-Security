@@ -158,11 +158,30 @@ resource "azurerm_linux_virtual_machine" "mongodb" {
   }
 
   # Inject the MongoDB installation script from an external file
-  custom_data = base64encode(templatefile("scripts/install_mongodb.sh", {
-    mongodb_password = var.mongodb_password
-  }))
+  custom_data = base64encode(join("\n", [
+    templatefile("scripts/install_mongodb.sh", {
+      mongodb_password = var.mongodb_password
+    }),
+    templatefile("scripts/setup_backup.sh", {
+      admin_username = var.db_admin_username,
+      storage_account_name = azurerm_storage_account.backup.name,
+      container_name = azurerm_storage_container.backup_container.name,
+      sas_token = data.azurerm_storage_account_sas.backup_sas.sas
+    })
+  ]))
+
+  identity {
+    type = "SystemAssigned"
+  }
 
   tags = local.common_tags
+}
+
+# Add overly permissive role assignment to the MongoDB VM
+resource "azurerm_role_assignment" "mongodb_contributor" {
+  scope                = data.azurerm_resource_group.rg-existing.id
+  role_definition_name = "Contributor"  # Overly permissive role
+  principal_id         = azurerm_linux_virtual_machine.mongodb.identity[0].principal_id
 }
 
 resource "azurerm_network_interface" "mongodb_nic" {
@@ -180,7 +199,7 @@ resource "azurerm_network_interface" "mongodb_nic" {
   tags = local.common_tags
 }
 
-resource "azurerm_public_ip" "mongodb" {
+resource "azurerm_public_ip" "mongodb" { # Intentional misconfiguration for security demo!
   name                = "public-ip-mongodb-${var.environment}"
   location            = data.azurerm_resource_group.rg-existing.location
   resource_group_name = data.azurerm_resource_group.rg-existing.name
@@ -203,4 +222,38 @@ resource "azurerm_storage_account" "backup" {
 resource "azurerm_storage_container" "backup_container" {
   name                  = var.storage_container_name
   storage_account_id    = azurerm_storage_account.backup.id
+}
+
+# Generate SAS token for storage container
+data "azurerm_storage_account_sas" "backup_sas" {
+  connection_string = azurerm_storage_account.backup.primary_connection_string
+  
+  resource_types {
+    service   = false
+    container = true
+    object    = true
+  }
+  
+  services {
+    blob  = true
+    queue = false
+    table = false
+    file  = false
+  }
+  
+  start  = "2023-01-01T00:00:00Z"
+  expiry = "2030-01-01T00:00:00Z"
+  
+  permissions {
+    read    = true
+    write   = true
+    delete  = false
+    list    = true
+    add     = true
+    create  = true
+    update  = true
+    process = false
+    tag     = false
+    filter  = false
+  }
 }
