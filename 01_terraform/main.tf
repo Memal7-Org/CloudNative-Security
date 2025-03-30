@@ -47,10 +47,10 @@ resource "azurerm_subnet" "db_subnet" {
 
 # AKS Cluster
 resource "azurerm_kubernetes_cluster" "aks" {
-  name                = "aks-${var.environment}"
+  name                = "aks-cloudnative-security"  # Changed from "aks-${var.environment}"
   location            = data.azurerm_resource_group.rg-existing.location
   resource_group_name = data.azurerm_resource_group.rg-existing.name
-  dns_prefix          = "aks-${var.environment}"
+  dns_prefix          = "aks-cloudnative-security"  # Changed from "aks-${var.environment}"
 
   default_node_pool {
     name            = "default"
@@ -252,6 +252,3 @@ data "azurerm_storage_account_sas" "backup_sas" {
     filter  = false
   }
 }
-
-# Remove or comment out the null_resource for backup script setup
-# resource "null_resource" "mongodb_backup_setup" { ... }
