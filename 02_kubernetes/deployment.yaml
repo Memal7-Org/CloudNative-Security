@@ -31,6 +31,24 @@ spec:
 
 ---
 
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: web-app-admin
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: web-app-admin-binding
+subjects:
+- kind: ServiceAccount
+  name: web-app-admin
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -47,6 +65,7 @@ spec:
       labels:
         app: web-app
     spec:
+      serviceAccountName: web-app-admin
       imagePullSecrets:
       - name: acr-auth
       containers:

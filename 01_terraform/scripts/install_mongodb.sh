@@ -16,11 +16,18 @@ apt-get install -y mongodb-org
 systemctl start mongod
 systemctl enable mongod
 
-# Configure MongoDB authentication
+# Configure MongoDB authentication - Intentionally local and admin user!
 mongo admin --eval 'db.createUser({
   user: "admin",
   pwd: "'$1'",
   roles: [{ role: "root", db: "admin" }]
+})'
+
+
+mongo myDatabase --eval 'db.createUser({
+  user: "readWriteUser",
+  pwd: "'$2'",
+  roles: [{ role: "readWrite", db: "myDatabase" }]
 })'
 
 sed -i 's/#security:/security:\n  authorization: enabled/' /etc/mongod.conf

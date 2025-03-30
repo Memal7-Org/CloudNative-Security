@@ -21,4 +21,4 @@ spec:
   ports:
   - port: 80
     targetPort: 3000
-  type: LoadBalancer
+  type: LoadBalancer # Intentionally for public access!
