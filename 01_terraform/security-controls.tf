@@ -16,7 +16,7 @@ resource "azurerm_security_center_subscription_pricing" "defender_for_servers" {
 
 # Enable Azure Security Center alerts (detective control)
 resource "azurerm_security_center_contact" "security_alerts" {
-  name              = "security-contact"
+  name              = "default"  # Changed from "security-contact" to "default"
   email             = "security@example.com"
   phone             = "+1-555-123-4567"
   
