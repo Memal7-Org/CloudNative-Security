@@ -18,9 +18,15 @@ spec:
       - name: acr-auth
       containers:
       - name: backend-app
-        image: acrwizdemohyena.azurecr.io/backend-app:v1
+        image: acrwizdemomoray.azurecr.io/backend-app:v1
         ports:
         - containerPort: 4000
+        env:
+        - name: MONGODB_URI
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: connection-string
         resources:
           requests:
             memory: "256Mi"
@@ -70,10 +76,15 @@ spec:
       - name: acr-auth
       containers:
       - name: web-app
-        image: acrwizdemohyena.azurecr.io/web-app:v1
+        image: acrwizdemomoray.azurecr.io/web-app:v1
         env:
         - name: NODE_OPTIONS
           value: "--openssl-legacy-provider"
+        - name: MONGODB_URI
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: connection-string
         ports:
         - containerPort: 3000
         resources:

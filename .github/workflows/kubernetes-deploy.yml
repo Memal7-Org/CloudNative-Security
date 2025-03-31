@@ -87,6 +87,13 @@ jobs:
       run: |
         az aks get-credentials --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.AKS_CLUSTER_NAME }} --admin
         
+    - name: Extract MongoDB connection string from Terraform output
+      run: |
+        cd ./01_terraform
+        CONNECTION_STRING=$(terraform output -raw mongodb_connection_string)
+        # Create a Kubernetes secret
+        kubectl create secret generic mongodb-secret --from-literal=connection-string="$CONNECTION_STRING" --dry-run=client -o yaml | kubectl apply -f -
+        
     - name: Update Kubernetes manifest with image tags
       run: |
         # Replace placeholder image references with actual values
