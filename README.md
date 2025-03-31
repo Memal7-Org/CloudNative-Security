@@ -51,7 +51,6 @@ CloudNative-Security/
 
    ```bash
    az login
-   az account set --subscription <your-subscription-id>
    ```
 
 3. **Configure GitHub Repository Secrets and Variables**
