@@ -87,6 +87,14 @@ jobs:
       run: |
         az aks get-credentials --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.AKS_CLUSTER_NAME }} --admin
         
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      
+    - name: Initialize Terraform
+      run: |
+        cd ./01_terraform
+        terraform init
+        
     - name: Extract MongoDB connection string from Terraform output
       run: |
         cd ./01_terraform
